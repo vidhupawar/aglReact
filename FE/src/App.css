@@ -37,3 +37,9 @@ body {
 .m-t-15{
   margin-top: 15px
 }
+.fontSize{
+  font-size: 14px !important;
+}
+.m-l-15{
+  margin-left: 15px
+}

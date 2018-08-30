@@ -1,5 +1,7 @@
 import React, {Component} from "react";
 import Checkbox from './Checkbox';
+import '../App.css';
+
 
 export default class Users extends Component {
 	constructor(props) {
@@ -33,10 +35,14 @@ export default class Users extends Component {
 	getCheckbox(e) {
 		const checkboxes = this.state.checkboxes
 		return checkboxes.map(item => (
-            <label key={item.name}>
-              {item.name}
-              <Checkbox name={item.name} checked={this.state.checkedItems.get(item.name)} onChange={this.handleChange} />
-            </label>
+            <p className="fontSize" key={item.name}>
+              <span>
+              	<Checkbox name={item.name} checked={this.state.checkedItems.get(item.name)} onChange={this.handleChange} />
+              </span>
+              <span className="m-l-15">
+              	{item.name}
+              </span>
+            </p>
         ))
 	}
 
@@ -48,7 +54,7 @@ export default class Users extends Component {
 		users.push(state.newUser)
 		console.log("state.user", state.newUser)
 		const listUsers = users.map((usr) =>
-	    	<label key={usr.name}>{usr.name}</label>
+	    	<p key={usr.name}>{usr.name}</p>
 
 		);
 		this.setState({
@@ -64,15 +70,14 @@ export default class Users extends Component {
 					<h2>USERS</h2>
 					<button className="btn btn-primary col-md-offset-12 col-md-2" onClick={this.handleSubmit}>ADD USER</button>
 				</div>
-				<form name="form">
-					<div>
+				<form name="form" className="col-md-12">
+					<div className="col-md-6">
 						<label htmlFor="users">Users</label>
 						<input type="text" className="form-control" name="user.name" value={this.state.newUser} />
 
 					</div>
-					<div>
+					<div className="col-md-10 m-t-15">
 						<label htmlFor="permissions">Permissions</label>
-
 						{this.getCheckbox()}
 					</div>
 				</form>
