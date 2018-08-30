@@ -1,15 +1,29 @@
 import React, { Component } from 'react';
 import './App.css';
-import LoginPage from "./components/login";
+import { Switch, Route } from 'react-router-dom'
+import Login from "./components/login";
+import Users from "./components/user";
+
 
 class App extends Component {
-  render() {
-    return (
-      <div className="App">
-       	<LoginPage> </LoginPage>
-      </div>
-    );
-  }
+	render() {
+		const userDetails = localStorage.getItem("userData");
+		return (
+			<div className="jumbotron">
+				<div className="container">
+					<div className="col-sm-8 col-sm-offset-2">
+						<Switch>
+							if(userDetails){
+								<Route path='/home' component={Users}/>
+							}else{
+								<Route path='/' component={Login}/>
+							}
+						</Switch>
+					</div>
+				</div>
+			</div>
+		);
+	}
 }
-
+		 
 export default App;
