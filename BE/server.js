@@ -14,6 +14,7 @@
 
 
 var express = require('express');
+var bodyParser = require('body-parser');
 var app = express();
 
     app.get('/', function (req, res, next) {
@@ -54,6 +55,10 @@ var app = express();
             next();
         }
     });
+
+    app.use(bodyParser.urlencoded({
+	  extended: true
+	}));
 	var mongoose = require('mongoose');
   	mongoose.connection.once('open', function(){
         console.log("MongoDb connected successfully");
@@ -70,12 +75,12 @@ var app = express();
 	connectionInstance.once('open', function() {
 		console.log("MongoDb connected successfully");
 	});
+	mongoose.set('debug', true);
 
 
 	var user_schema = {
 		name: {type: String},
-		acc_right : {type: Object},
-		groups: {type: String}
+		id: {type:Number}
 	};
 	var admin_schema = {
 		id: {type: Number},
@@ -89,12 +94,32 @@ var app = express();
 	var admin_schema = new mongoose.Schema(admin_schema);
 	var users_model = connectionInstance.model('users', admin_schema);
 
+	var perms_schema = {
+		"suId" : {type: Number},
+	    "userId" : {type: Number},
+	    "rights" :  {type: Array},
+	}
+	var perms_schema = new mongoose.Schema(perms_schema);
+	var perms_model = connectionInstance.model('permissions', perms_schema);
 
 // set the port of our application
 // process.env.PORT lets the port be set by Heroku
 var port = process.env.PORT || 4001;
 var async = require('async');
 var MD5 = require('MD5');
+var jwt = require('jsonwebtoken');
+
+
+getToken = function(auth, callback) {
+  var token = jwt.sign(
+        {   id : auth._id,
+            usr_id: auth.usr_id,
+            usr_type: auth.usr_type
+        },
+        "dev"
+    );
+    return callback(token);
+};
     app.post('/login', function(req, res){
         if (req.headers.username && req.headers.password) {
 			async.waterfall([
@@ -113,12 +138,21 @@ var MD5 = require('MD5');
 					}else{
 						cb('Invalid password');
 					}
+				},
+				function(user_docs, cb){
+					getToken(user_docs[0], function(token){
+						if (token == null) {
+							cb('Invalid password');
+						}else{
+							cb(null, user_docs, token)
+						}
+					})
 				}
-			], function(err, user_docs){
+			], function(err, user_docs, token){
 				if(err){
 					res.status(400).json({status:'failure', error: err});
 				}else{
-					res.status(200).json({'status':'success', 'result': user_docs});
+					res.status(200).json({'status':'success', "token" : token, 'result': user_docs});
 				}
 			})
 		}else{
@@ -126,8 +160,9 @@ var MD5 = require('MD5');
 		}
     });
 
-    app.put('/user/:id', function(req, res){
-    	users_model.update({id: req.params.id}, {"$set" : {users : req.body.users}}, {upsert:true}, function(err, user_docs){
+    app.post('/add/user', function(req, res){
+    	console.log("\n\n req.body.name", req.body)
+    	users_model.update({id: req.params.id}, {"$set" : {users : req.body.name}}, {upsert:true}, function(err, user_docs){
 			if(err){
 				res.status(400).json({status:'failure', error: "Error while updating users"});
 			}else{
@@ -136,6 +171,15 @@ var MD5 = require('MD5');
 		});
     });
 
+    app.get('/perm/:id', function(req, res){
+    	perms_model.findOne({userId : req.params.id}, function(err, perm_docs){
+    		if(err){
+				res.status(400).json({status:'failure', error: "Error while getting permissions"});
+			}else{
+				res.status(200).json({'status':'success', 'result': perm_docs});
+			}
+		});
+    });
 
 app.listen(port, function() {
 	console.log('Our app is running on http://localhost:' + port);
